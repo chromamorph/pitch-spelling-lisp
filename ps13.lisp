@@ -49,7 +49,7 @@ Percentage correct = ~,2f%
                 (* 100.0 (/ (- total-number-of-notes total-number-of-errors) total-number-of-notes))
                 )))
 
-(defun ps13-test (&optional (directory (choose-directory-dialog)) (pre-context 33) (post-context 23) (supertest nil))
+(defun ps13-test (&optional (directory (choose-directory)) (pre-context 33) (post-context 23) (supertest nil))
   (let* ((file-list (directory (pathname (concatenate 'string
                                                       (pathname-directory-to-string (pathname-directory directory))
                                                       "*.opnd*"))))
@@ -75,7 +75,7 @@ Percentage correct = ~,2f%
 
 (defun ps13-supertest (&optional (start-pre-context 1) (start-post-context 1) (end-pre-context 25) (end-post-context 25))
   (do* ((file-list (directory (pathname (concatenate 'string
-                                                      (pathname-directory-to-string (pathname-directory (choose-directory-dialog)))
+                                                      (pathname-directory-to-string (pathname-directory (choose-directory)))
                                                       "*.opnd*"))))
         (best-pre-context start-pre-context)
         (best-post-context start-post-context)
@@ -113,7 +113,7 @@ Best score = ~,2f%
 
 
 
-(defun ps13 (&optional (opnd-file-name (choose-file-dialog))
+(defun ps13 (&optional (opnd-file-name (choose-file))
                        (init-morph nil)
                        (pre-context 33)
                        (post-context 23)
@@ -387,7 +387,7 @@ Errors: ~a
 
 (defun ps13-for-supertest (&optional (input-file-name nil) (init-morph nil) pre-context post-context)
   (let* ((chromamorph-table (list 0 1 1 2 2 3 3 4 5 5 6 6))
-         (file-name (if input-file-name input-file-name (choose-file-dialog)))
+         (file-name (if input-file-name input-file-name (choose-file)))
          (opcpm-test (remove-duplicates (sort (mapcar #'(lambda (opc-datapoint)
                                                           (list (first opc-datapoint)
                                                                 (second opc-datapoint)
@@ -1013,7 +1013,7 @@ Construction of seconds relation pitch name digraph:
                           digraph)))))
 
 (defun find-all-genus-occurrences (genus)
-  (let* ((file-name (choose-file-dialog))
+  (let* ((file-name (choose-file))
          (dataset (with-open-file (dataset-stream
                                    file-name)
                     (read dataset-stream))))
@@ -1029,7 +1029,7 @@ Construction of seconds relation pitch name digraph:
                                       dataset)))))
 
 (defun find-chroma-vector ()
-  (let* ((file-name (choose-file-dialog))
+  (let* ((file-name (choose-file))
          (dataset (with-open-file (dataset-stream
                                    file-name)
                     (read dataset-stream)))
@@ -1112,7 +1112,7 @@ Construction of seconds relation pitch name digraph:
                          :test #'(lambda (a b) (equalp a (list (first b) (third b))))))))
 (defun opd-opn (&optional (voice nil))
   (let* ((opd (with-open-file (opd-file
-                               (choose-file-dialog))
+                               (choose-file))
                 (read opd-file)))
          (opn (mapcar #'(lambda (opd-datapoint)
                           (append (list (first opd-datapoint)
@@ -1330,3 +1330,76 @@ Table size = 3
  ((7 (2 1) 11 6 3)))
 
 |#
+
+;;;; Some trivial wrappers for choosing files & directories
+;;;
+
+(defun choose-file (&rest keywords
+                          &key (prompt "File")
+                          &allow-other-keys)
+  (declare (ignorable keywords prompt))
+  ;; Choose a file: this is making the decision about whether there is
+  ;; a GUI at compile time not runtime, which is wrong.
+  #+(and CCL easygui)
+  (apply #'choose-file-dialog
+         :prompt prompt
+         :allow-other-keys t
+         keywords)
+  #+(and LispWorks CAPI)
+  (apply #'capi:prompt-for-file prompt
+         :allow-other-keys t
+         keywords)
+  #-(or (and CCL easygui) (and LispWorks CAPI))
+  (progn
+    ;; This is extremely rudimentary
+    (format *query-io* "~&~A: " prompt)
+    (finish-output *query-io*)
+    (pathname (string-trim '(#\Space #\Tab) (read-line *query-io*)))))
+
+(defun choose-directory (&rest keywords
+                          &key (prompt "Directory")
+                          &allow-other-keys)
+  ;; Choose a directory.  This is making the decision about whether
+  ;; there's a GUI at compile time, not runtime, which is wrong.
+  (declare (ignorable keywords prompt))
+  #+(and CCL easygui)
+  (apply #'choose-directory-dialog
+         :prompt prompt
+         :allow-other-keys t
+         keywords)
+  #+(and LispWorks CAPI)
+  (apply #'capi:prompt-for-directory prompt
+         :allow-other-keys t
+         keywords)
+  #-(or (and CCL easygui) (and LispWorks CAPI))
+  (progn
+    ;; Fallback: this is a rudimentary hack, and I am sure there are
+    ;; portability libraries which do this far better.  In particular
+    ;; this knows about what directory separators exist, which is
+    ;; horrid.
+    (format *query-io* "~&~A: " prompt)
+    (finish-output *query-io*)
+    (loop with dirseps = '(#\/ #\\)
+          with user-dir = (string-trim '(#\Space #\Tab)
+                                       (read-line *query-io*))
+          with absolutep = (member (char user-dir 0) dirseps)
+          for start = 0 then (1+ sep-pos)
+          for sep-pos = (position-if (lambda (e)
+                                       (member e dirseps))
+                                     user-dir
+                                     :start start)
+          for component = (subseq user-dir start sep-pos)
+          when (> (length component) 0)
+          collect component into components
+          while sep-pos
+          finally (return (make-pathname :directory
+                                         (cons (if absolutep ':absolute ':relative)
+                                               components)
+                                         :name nil
+                                         :type nil)))))
+
+(defun directory-opnd-files (directory)
+  ;; the OPND files in a directory
+  (directory (merge-pathnames
+              (parse-namestring "*.opnd*")
+              directory)))
