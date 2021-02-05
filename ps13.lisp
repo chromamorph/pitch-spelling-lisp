@@ -16,6 +16,8 @@ ps13 Pitch spelling algorithm as described in
 Copyright © 2003-2003 by David Meredith. All rights reserved.
 |#
 
+(in-package :cl-user)
+
 #||
 ;;; I don't think these are needed, and they only make sense in CCL
 (setf *save-local-symbols* t)
@@ -720,12 +722,12 @@ Algorithms for converting between A.S.A. pitch names and MIPS pitches.
 (defun bmod (x y)
   (- x
      (* y
-        (int (/ x y)))))
+        (intgr (/ x y)))))
 
 (defun p-pm (p)
   (second p))
 
-(defun int (x)
+(defun intgr (x)
   (values (floor x)))
 
 (defun p-gc (p)
@@ -739,7 +741,7 @@ Algorithms for converting between A.S.A. pitch names and MIPS pitches.
   (div (p-pm p) mum))
 
 (defun div (x y)
-  (int (/ x y)))
+  (intgr (/ x y)))
 
 (defun pn-p (pn-as-input)
   (let* ((n (if (stringp pn-as-input)
