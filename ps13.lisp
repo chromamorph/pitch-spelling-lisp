@@ -16,8 +16,11 @@ ps13 Pitch spelling algorithm as described in
 Copyright © 2003-2003 by David Meredith. All rights reserved.
 |#
 
+#||
+;;; I don't think these are needed, and they only make sense in CCL
 (setf *save-local-symbols* t)
 (setf *verbose-eval-selection* t)
+||#
 
 (defvar mum 7)
 (setf mum 7)
