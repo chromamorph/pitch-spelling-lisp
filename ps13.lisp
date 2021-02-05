@@ -50,10 +50,7 @@ Percentage correct = ~,2f%
                 )))
 
 (defun ps13-test (&optional (directory (choose-directory)) (pre-context 33) (post-context 23) (supertest nil))
-  (let* ((file-list (directory (pathname (concatenate 'string
-                                                      (pathname-directory-to-string (pathname-directory directory))
-                                                      "*.opnd*"))))
-         
+  (let* ((file-list (directory-opnd-files directory))
          (total-number-of-errors 0)
          (total-number-of-notes 0))
     (dolist (file-name file-list)
@@ -74,9 +71,7 @@ Percentage correct = ~,2f%
                 )))
 
 (defun ps13-supertest (&optional (start-pre-context 1) (start-post-context 1) (end-pre-context 25) (end-post-context 25))
-  (do* ((file-list (directory (pathname (concatenate 'string
-                                                      (pathname-directory-to-string (pathname-directory (choose-directory)))
-                                                      "*.opnd*"))))
+  (do* ((file-list (directory-opnd-files (choose-directory)))
         (best-pre-context start-pre-context)
         (best-post-context start-post-context)
         (best-percentage 0.0)
@@ -676,14 +671,6 @@ Errors: ~a
 
 (defun chromatic-pitch-chroma (chromatic-pitch)
   (mod chromatic-pitch 12))
-
-(defun pathname-directory-to-string (pn)
-  (let ((pns (concatenate 'string (second pn) ":")))
-    (dolist (pnelt (cddr pn) pns)
-      (setf pns (concatenate 'string
-                             pns 
-                             pnelt
-                             ":")))))
 
 (defun vector-minus (v1 v2)
   (mapcar #'- v1 v2))
