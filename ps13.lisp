@@ -1022,7 +1022,8 @@ Construction of seconds relation pitch name digraph:
                     (read dataset-stream)))
          (chromatic-pitch-list (mapcar #'second dataset))
          (chroma-list (mapcar #'chromatic-pitch-chroma chromatic-pitch-list))
-         (chroma-vector (do* ((cv '(0 0 0 0 0 0 0 0 0 0 0 0))
+         (chroma-vector (do* ((cv (load-time-value
+                                   (list 0 0 0 0 0 0 0 0 0 0 0 0)))
                               (c 0 (+ 1 c)))
                              ((= c 12)
                               cv)
