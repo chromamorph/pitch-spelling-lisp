@@ -1,0 +1,1 @@
+;; This file contains the function open-read-close which takes a;; single argument, file-name, opens the file with this name, reads;; one element from the file and then closes the file.(defun open-read-close (file-name)  (with-open-file (file-stream		   file-name		   :direction :input)    (read file-stream)))
